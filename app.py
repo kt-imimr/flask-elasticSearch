@@ -1,8 +1,15 @@
 import re
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from search import Search
 
+from werkzeug.utils import secure_filename
+import os
+
 app = Flask(__name__)
+UPLOAD_FOLDER = './uploads'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 es = Search()
 
 @app.get('/')
@@ -80,3 +87,27 @@ def reindex():
     response = es.reindex()
     print(f'Index with {len(response["items"])} documents created '
           f'in {response["took"]} milliseconds.')
+
+
+# upload route
+def allowed_file(filename):
+    # print("🐍 File: search-tutorial/app.py | Line: 95 | allowed_file ~ filename.rsplit('.', 1)[[1]].lower()",filename.rsplit('.', 1)[1])
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"})
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"})
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'] + "/pdf/", filename))
+        return jsonify({"response": "File uploaded successfully"})
+    else:
+        return jsonify({"error": "Invalid file type"})
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
