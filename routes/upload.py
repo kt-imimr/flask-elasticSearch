@@ -70,6 +70,25 @@ def upload_file():
             # 2.1 infoExtract(file_path)
             # 2.2 analyze
         
+        ## pipeline, ingest,
+
+
+
+
+
+# transform the string before indexing,
+
+# or tokenize things before indexing.
+
+
+
+# embedding
+
+
+
+# hard to understand.
+
+
 
         # 3rd es pipeline and ingest (vector)
 
