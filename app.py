@@ -5,8 +5,11 @@ from search import Search
 from werkzeug.utils import secure_filename
 import os
 
+import datetime
+
 app = Flask(__name__)
 UPLOAD_FOLDER = './uploads'
+
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -22,33 +25,69 @@ def handle_search():
     filters, parsed_query = extract_filters(query)
     from_ = request.form.get('from_', type=int, default=0)
 
+    if parsed_query:
+        search_query = {
+            'must': {
+                'multi_match': {
+                    'query': parsed_query,
+                    'fields': ['name', 'summary', 'content'],
+                }
+            }
+        }
+    else:
+        search_query = {
+            'must': {
+                'match_all': {}
+            }
+        }
+
     results = es.search(
         query={
             'bool': {
-                'must': {
-                    'multi_match': {
-                        'query': parsed_query,
-                        'fields': ['name', 'summary', 'content'],
-                    }
-                },
+                **search_query,
                 **filters
             }
+        },
+        aggs={
+            'category-agg': {
+                'terms': {
+                    'field': 'category.keyword',
+                }
+            },
+            'year-agg': {
+                'date_histogram': {
+                    'field': 'updated_at',
+                    'calendar_interval': 'year',
+                    'format': 'yyyy',
+                },
+            },
         },
         size=5,
         from_=from_
     )
+    aggs = {
+        'Category': {
+            bucket['key']: bucket['doc_count']
+            for bucket in results['aggregations']['category-agg']['buckets']
+        },
+        'Year': {
+            bucket['key']: bucket['doc_count']
+            for bucket in results['aggregations']['year-agg']['buckets']
+            if bucket['doc_count'] > 0
+        },
+    }
+
+    keys_aggs_year = list(aggs["Year"].keys())
+    len_aggs_year = len(keys_aggs_year)
+    if len_aggs_year > 0:
+        for key in keys_aggs_year:
+            my_datetime = datetime.datetime.fromtimestamp(key / 1000)
+            my_year = my_datetime.strftime("%Y")
+            aggs["Year"][my_year] = aggs["Year"].pop(key)
+
     return render_template('index.html', results=results['hits']['hits'],
                            query=query, from_=from_,
-                           total=results['hits']['total']['value'])
-
-
-
-@app.get('/document/<id>')
-def get_document(id):
-    document = es.retrieve_document(id)
-    title = document['_source']['name']
-    paragraphs = document['_source']['content'].split('\n')
-    return render_template('document.html', title=title, paragraphs=paragraphs)
+                           total=results['hits']['total']['value'], aggs=aggs)
 
 def extract_filters(query):
     filters = []
@@ -81,6 +120,15 @@ def extract_filters(query):
     return {'filter': filters}, query
 
 
+@app.get('/document/<id>')
+def get_document(id):
+    document = es.retrieve_document(id)
+    title = document['_source']['name']
+    paragraphs = document['_source']['content'].split('\n')
+    return render_template('document.html', title=title, paragraphs=paragraphs)
+
+
+
 @app.cli.command()
 def reindex():
     """Regenerate the Elasticsearch index."""
@@ -103,8 +151,26 @@ def upload_file():
         return jsonify({"error": "No selected file"})
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'] + "/pdf/", filename))
-        return jsonify({"response": "File uploaded successfully"})
+
+        # 1st determine whether its file extension
+        fileExt = filename.rsplit('.', 1)[1].lower()
+        print("🐍 File: search-tutorial/app.py | Line: 109 | upload_file ~ fileExt",fileExt)
+
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'] + f"/{fileExt}/", filename)
+        file.save(file_path)
+
+        # 2nd Once saved, extract info and analyze it
+            # 2.1 infoExtract(file_path)
+            # 2.2 analyze
+        
+
+        # 3rd es pipeline and ingest (vector)
+
+        # 4nd es index
+
+
+
+        return jsonify({"response": "File uploaded successfully and extracting info and analyzing it."})
     else:
         return jsonify({"error": "Invalid file type"})
 
