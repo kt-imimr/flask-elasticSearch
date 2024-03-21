@@ -2,18 +2,21 @@ import re
 from flask import Flask, render_template, request, jsonify
 from search import Search
 
-from werkzeug.utils import secure_filename
-import os
 
 import datetime
 
-app = Flask(__name__)
-UPLOAD_FOLDER = './uploads'
 
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# api routes
+from routes.upload import upload_bp
+
+app = Flask(__name__)
+app.register_blueprint(upload_bp, url_prefix='/api')
+
+
 
 es = Search()
+check_file_type = Check_file_type()
+
 
 @app.get('/')
 def index():
@@ -137,42 +140,6 @@ def reindex():
           f'in {response["took"]} milliseconds.')
 
 
-# upload route
-def allowed_file(filename):
-    # print("🐍 File: search-tutorial/app.py | Line: 95 | allowed_file ~ filename.rsplit('.', 1)[[1]].lower()",filename.rsplit('.', 1)[1])
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"})
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"})
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-
-        # 1st determine whether its file extension
-        fileExt = filename.rsplit('.', 1)[1].lower()
-        print("🐍 File: search-tutorial/app.py | Line: 109 | upload_file ~ fileExt",fileExt)
-
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'] + f"/{fileExt}/", filename)
-        file.save(file_path)
-
-        # 2nd Once saved, extract info and analyze it
-            # 2.1 infoExtract(file_path)
-            # 2.2 analyze
-        
-
-        # 3rd es pipeline and ingest (vector)
-
-        # 4nd es index
-
-
-
-        return jsonify({"response": "File uploaded successfully and extracting info and analyzing it."})
-    else:
-        return jsonify({"error": "Invalid file type"})
 
 
 if __name__ == '__main__':
