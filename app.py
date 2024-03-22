@@ -44,11 +44,21 @@ def handle_search():
         }
 
     results = es.search(
+        knn={
+            'field': 'embedding',
+            'query_vector': es.get_embedding(parsed_query),
+            'k': 10,
+            'num_candidates': 50,
+            **filters,
+        },
         query={
             'bool': {
                 **search_query,
                 **filters
             }
+        },
+        rank={
+            'rrf': {}
         },
         aggs={
             'category-agg': {
@@ -79,6 +89,7 @@ def handle_search():
         },
     }
 
+    # convert timestamp to year format
     keys_aggs_year = list(aggs["Year"].keys())
     len_aggs_year = len(keys_aggs_year)
     if len_aggs_year > 0:
@@ -138,6 +149,15 @@ def reindex():
     print(f'Index with {len(response["items"])} documents created '
           f'in {response["took"]} milliseconds.')
 
+@app.cli.command()
+def deploy_elser():
+    """Deploy the ELSER v2 model to Elasticsearch."""
+    try:
+        es.deploy_elser()
+    except Exception as exc:
+        print(f'Error: {exc}')
+    else:
+        print(f'ELSER model deployed.')
 
 
 
