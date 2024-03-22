@@ -15,7 +15,6 @@ app.register_blueprint(upload_bp, url_prefix='/api')
 
 
 es = Search()
-check_file_type = Check_file_type()
 
 
 @app.get('/')

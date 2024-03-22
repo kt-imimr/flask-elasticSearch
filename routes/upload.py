@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, jsonify, Blueprint
 from werkzeug.utils import secure_filename
-import os
-# utils
-import os
+
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/..")
-print (sys.path)
-from utils.helper import Check_file_type
+
+# utils
+from utils.upload import Check_file_type
+check_file_type = Check_file_type()
+
 
 app = Flask(__name__)
 
