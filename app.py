@@ -44,18 +44,18 @@ def handle_search():
         }
 
     results = es.search(
+        query={
+            'bool': {
+                **search_query,
+                **filters
+            }
+        },
         knn={
             'field': 'embedding',
             'query_vector': es.get_embedding(parsed_query),
             'k': 10,
             'num_candidates': 50,
             **filters,
-        },
-        query={
-            'bool': {
-                **search_query,
-                **filters
-            }
         },
         rank={
             'rrf': {}
@@ -149,7 +149,7 @@ def reindex():
     print(f'Index with {len(response["items"])} documents created '
           f'in {response["took"]} milliseconds.')
 
-@app.cli.command()
+@app.cli.command("deploy_elser")
 def deploy_elser():
     """Deploy the ELSER v2 model to Elasticsearch."""
     try:
@@ -160,6 +160,3 @@ def deploy_elser():
         print(f'ELSER model deployed.')
 
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
