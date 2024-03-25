@@ -24,6 +24,20 @@ def allowed_file(filename):
     # print("🐍 File: search-tutorial/app.py | Line: 95 | allowed_file ~ filename.rsplit('.', 1)[[1]].lower()",filename.rsplit('.', 1)[1])
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+@upload_bp.route('/uploader', methods=['POST'])
+def uploader_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"})
+    if not os.path.isdir(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    f = request.files['file'] 
+    filename = secure_filename(f.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    f.save(file_path) 
+    return 'File uploaded successfully'  
+
+
 @upload_bp.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:

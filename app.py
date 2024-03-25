@@ -160,6 +160,10 @@ def get_document(id):
     return render_template('document.html', title=title, paragraphs=paragraphs)
 
 
+@app.route('/upload') 
+def upload_form(): 
+   return render_template('upload.html') 
+
 
 @app.cli.command()
 def reindex():
