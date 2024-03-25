@@ -46,19 +46,18 @@ def handle_search():
     results = es.search(
         query={
             'bool': {
-                **search_query,
+                'must': [
+                    {
+                        'text_expansion': {
+                            'elser_embedding': {
+                                'model_id': '.elser_model_2',
+                                'model_text': parsed_query,
+                            }
+                        },
+                    }
+                ],
                 **filters
             }
-        },
-        knn={
-            'field': 'embedding',
-            'query_vector': es.get_embedding(parsed_query),
-            'k': 10,
-            'num_candidates': 50,
-            **filters,
-        },
-        rank={
-            'rrf': {}
         },
         aggs={
             'category-agg': {
@@ -83,20 +82,11 @@ def handle_search():
             for bucket in results['aggregations']['category-agg']['buckets']
         },
         'Year': {
-            bucket['key']: bucket['doc_count']
+            bucket['key_as_string']: bucket['doc_count']
             for bucket in results['aggregations']['year-agg']['buckets']
             if bucket['doc_count'] > 0
         },
     }
-
-    # convert timestamp to year format
-    keys_aggs_year = list(aggs["Year"].keys())
-    len_aggs_year = len(keys_aggs_year)
-    if len_aggs_year > 0:
-        for key in keys_aggs_year:
-            my_datetime = datetime.datetime.fromtimestamp(key / 1000)
-            my_year = my_datetime.strftime("%Y")
-            aggs["Year"][my_year] = aggs["Year"].pop(key)
 
     return render_template('index.html', results=results['hits']['hits'],
                            query=query, from_=from_,
