@@ -2,9 +2,7 @@ import re
 from flask import Flask, render_template, request, jsonify
 from search import Search
 
-
 import datetime
-
 
 # api routes
 from routes.upload import upload_bp
@@ -12,10 +10,7 @@ from routes.upload import upload_bp
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
 
-
-
 es = Search()
-
 
 @app.get('/')
 def index():
@@ -27,22 +22,58 @@ def handle_search():
     filters, parsed_query = extract_filters(query)
     from_ = request.form.get('from_', type=int, default=0)
 
-    results = es.search(
-        query={
-            'bool': {
-                'must': [
-                    {
-                        'text_expansion': {
-                            'elser_embedding': {
-                                'model_id': '.elser_model_2',
-                                'model_text': parsed_query,
-                            }
-                        },
+    if parsed_query:
+        search_query = {
+            'sub_searches': [
+                {
+                    'query': {
+                        'bool': {
+                            'must': {
+                                'multi_match': {
+                                    'query': parsed_query,
+                                    'fields': ['name', 'summary', 'content'],
+                                }
+                            },
+                            **filters
+                        }
                     }
-                ],
-                **filters
+                },
+                {
+                    'query': {
+                        'bool': {
+                            'must': [
+                                {
+                                    'text_expansion': {
+                                        'elser_embedding': {
+                                            'model_id': '.elser_model_2',
+                                            'model_text': parsed_query,
+                                        }
+                                    },
+                                }
+                            ],
+                            **filters,
+                        }
+                    },
+                },
+            ],
+            'rank': {
+                'rrf': {}
+            },
+        }
+    else:
+        search_query = {
+            'query': {
+                'bool': {
+                    'must': {
+                        'match_all': {}
+                    },
+                    **filters
+                }
             }
-        },
+        }
+
+    results = es.search(
+        **search_query,
         aggs={
             'category-agg': {
                 'terms': {
@@ -106,15 +137,12 @@ def extract_filters(query):
 
     return {'filter': filters}, query
 
-
 @app.get('/document/<id>')
 def get_document(id):
     document = es.retrieve_document(id)
     title = document['_source']['name']
     paragraphs = document['_source']['content'].split('\n')
     return render_template('document.html', title=title, paragraphs=paragraphs)
-
-
 
 @app.cli.command()
 def reindex():
@@ -133,4 +161,12 @@ def deploy_elser():
     else:
         print(f'ELSER model deployed.')
 
-
+@app.cli.command("delete_index")
+def delete_index():
+    """Delete the Elasticsearch index."""
+    try:
+        es.delete_index()
+    except Exception as exc:
+        print(f'Error: {exc}')
+    else:
+        print(f'Index deleted.')

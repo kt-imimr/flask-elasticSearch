@@ -48,6 +48,9 @@ class Search:
                 }
             }
         )
+    
+    def delete_index(self):
+        self.es.indices.delete(index='my_documents', ignore_unavailable=True)
 
     def get_embedding(self, text):
         return self.model.encode(text)
