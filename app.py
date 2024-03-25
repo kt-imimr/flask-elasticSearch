@@ -27,22 +27,6 @@ def handle_search():
     filters, parsed_query = extract_filters(query)
     from_ = request.form.get('from_', type=int, default=0)
 
-    if parsed_query:
-        search_query = {
-            'must': {
-                'multi_match': {
-                    'query': parsed_query,
-                    'fields': ['name', 'summary', 'content'],
-                }
-            }
-        }
-    else:
-        search_query = {
-            'must': {
-                'match_all': {}
-            }
-        }
-
     results = es.search(
         query={
             'bool': {
