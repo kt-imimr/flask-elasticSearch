@@ -173,7 +173,7 @@ def reindex():
           f'in {response["took"]} milliseconds.')
 
 
-@app.cli.command()
+@app.cli.command("deploy_elser")
 def deploy_elser():
     """Deploy the ELSER v2 model to Elasticsearch."""
     try:
