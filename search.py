@@ -22,10 +22,10 @@ class Search:
         pprint(client_info.body)
 
     def search(self, **query_args):
-        return self.es.search(index='my_documents', **query_args)
+        return self.es.search(index='demo_index', **query_args)
     
     def retrieve_document(self, id):
-        return self.es.get(index='my_documents', id=id)
+        return self.es.get(index='demo_index', id=id)
     
     def create_index(self):
         self.es.indices.delete(index='my_documents', ignore_unavailable=True)

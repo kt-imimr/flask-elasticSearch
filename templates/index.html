@@ -45,7 +45,14 @@
                     <p>
                         {{ from_ + loop.index }}. <b><a href="{{ url_for('get_document', id=result._id) }}">{{ result._source.name }}</a></b>
                         <br>
-                        {{ result._source.summary }}
+                        summary: {{ result._source.summary }}
+                        <br>
+
+                        content: {{ result._source.content }}
+                        <br>
+
+                        page number: {{ result._source.page_number }}
+                        
                         <br>
                         <small>
                             Category: {{ result._source.category }}.

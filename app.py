@@ -2,7 +2,9 @@ import re
 from flask import Flask, render_template, request, jsonify
 from search import Search
 
+
 import datetime
+
 
 # api routes
 from routes.upload import upload_bp
@@ -10,7 +12,10 @@ from routes.upload import upload_bp
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
 
+
+
 es = Search()
+
 
 @app.get('/')
 def index():
@@ -24,56 +29,37 @@ def handle_search():
 
     if parsed_query:
         search_query = {
-            'sub_searches': [
-                {
-                    'query': {
-                        'bool': {
-                            'must': {
-                                'multi_match': {
-                                    'query': parsed_query,
-                                    'fields': ['name', 'summary', 'content'],
-                                }
-                            },
-                            **filters
-                        }
-                    }
-                },
-                {
-                    'query': {
-                        'bool': {
-                            'must': [
-                                {
-                                    'text_expansion': {
-                                        'elser_embedding': {
-                                            'model_id': '.elser_model_2',
-                                            'model_text': parsed_query,
-                                        }
-                                    },
-                                }
-                            ],
-                            **filters,
-                        }
-                    },
-                },
-            ],
-            'rank': {
-                'rrf': {}
-            },
+            'must': {
+                'multi_match': {
+                    'query': parsed_query,
+                    'fields': ['name', 'summary', 'content'],
+                }
+            }
         }
     else:
         search_query = {
-            'query': {
-                'bool': {
-                    'must': {
-                        'match_all': {}
-                    },
-                    **filters
-                }
+            'must': {
+                'match_all': {}
             }
         }
 
     results = es.search(
-        **search_query,
+        # query={
+        #     'bool': {
+        #         **search_query,
+        #         **filters
+        #     }
+        # },
+        knn={
+            'field': 'embedding',
+            'query_vector': es.get_embedding(parsed_query),
+            'k': 10,
+            'num_candidates': 50,
+            **filters,
+        },
+        # rank={
+        #     'rrf': {}
+        # },
         aggs={
             'category-agg': {
                 'terms': {
@@ -97,12 +83,21 @@ def handle_search():
             for bucket in results['aggregations']['category-agg']['buckets']
         },
         'Year': {
-            bucket['key_as_string']: bucket['doc_count']
+            bucket['key']: bucket['doc_count']
             for bucket in results['aggregations']['year-agg']['buckets']
             if bucket['doc_count'] > 0
         },
     }
 
+    # convert timestamp to year format
+    keys_aggs_year = list(aggs["Year"].keys())
+    len_aggs_year = len(keys_aggs_year)
+    if len_aggs_year > 0:
+        for key in keys_aggs_year:
+            my_datetime = datetime.datetime.fromtimestamp(key / 1000)
+            my_year = my_datetime.strftime("%Y")
+            aggs["Year"][my_year] = aggs["Year"].pop(key)
+    print(results)
     return render_template('index.html', results=results['hits']['hits'],
                            query=query, from_=from_,
                            total=results['hits']['total']['value'], aggs=aggs)
@@ -137,12 +132,15 @@ def extract_filters(query):
 
     return {'filter': filters}, query
 
+
 @app.get('/document/<id>')
 def get_document(id):
     document = es.retrieve_document(id)
     title = document['_source']['name']
     paragraphs = document['_source']['content'].split('\n')
     return render_template('document.html', title=title, paragraphs=paragraphs)
+
+
 
 @app.cli.command()
 def reindex():
@@ -161,12 +159,4 @@ def deploy_elser():
     else:
         print(f'ELSER model deployed.')
 
-@app.cli.command("delete_index")
-def delete_index():
-    """Delete the Elasticsearch index."""
-    try:
-        es.delete_index()
-    except Exception as exc:
-        print(f'Error: {exc}')
-    else:
-        print(f'Index deleted.')
+
