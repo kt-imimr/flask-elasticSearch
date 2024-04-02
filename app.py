@@ -83,21 +83,13 @@ def handle_search():
             for bucket in results['aggregations']['category-agg']['buckets']
         },
         'Year': {
-            bucket['key']: bucket['doc_count']
+            bucket['key_as_string']: bucket['doc_count']
             for bucket in results['aggregations']['year-agg']['buckets']
             if bucket['doc_count'] > 0
         },
     }
 
-    # convert timestamp to year format
-    keys_aggs_year = list(aggs["Year"].keys())
-    len_aggs_year = len(keys_aggs_year)
-    if len_aggs_year > 0:
-        for key in keys_aggs_year:
-            my_datetime = datetime.datetime.fromtimestamp(key / 1000)
-            my_year = my_datetime.strftime("%Y")
-            aggs["Year"][my_year] = aggs["Year"].pop(key)
-    print(results)
+
     return render_template('index.html', results=results['hits']['hits'],
                            query=query, from_=from_,
                            total=results['hits']['total']['value'], aggs=aggs)

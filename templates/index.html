@@ -45,15 +45,20 @@
                     <p>
                         {{ from_ + loop.index }}. <b><a href="{{ url_for('get_document', id=result._id) }}">{{ result._source.name }}</a></b>
                         <br>
+                        <br>
+
                         summary: {{ result._source.summary }}
+                        <br>
                         <br>
 
                         content: {{ result._source.content }}
                         <br>
+                        <br>
 
                         page number: {{ result._source.page_number }}
-                        
+                        <br>                        
                         <br>
+                        
                         <small>
                             Category: {{ result._source.category }}.
                             Last updated: {{ result._source.updated_at | default(result._source.created_on) }}.
