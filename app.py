@@ -25,6 +25,8 @@ def index():
 def handle_search():
     query = request.form.get('query', '')
     filters, parsed_query = extract_filters(query)
+    print("🐍 File: search-tutorial/app.py | Line: 28 | handle_search ~ parsed_query",parsed_query)
+    print("🐍 File: search-tutorial/app.py | Line: 28 | handle_search ~ filters",filters)
     from_ = request.form.get('from_', type=int, default=0)
 
     if parsed_query:
@@ -32,7 +34,7 @@ def handle_search():
             'must': {
                 'multi_match': {
                     'query': parsed_query,
-                    'fields': ['name', 'summary', 'content'],
+                    'fields': ['filename', 'summary', 'content'],
                 }
             }
         }
@@ -44,19 +46,19 @@ def handle_search():
         }
 
     results = es.search(
-        # query={
-        #     'bool': {
-        #         **search_query,
-        #         **filters
-        #     }
-        # },
-        knn={
-            'field': 'embedding',
-            'query_vector': es.get_embedding(parsed_query),
-            'k': 10,
-            'num_candidates': 50,
-            **filters,
+        query={
+            'bool': {
+                **search_query,
+                **filters
+            }
         },
+        # knn={
+        #     'field': 'embedding',
+        #     'query_vector': es.get_embedding(parsed_query),
+        #     'k': 50,
+        #     'num_candidates': 50,
+        #     **filters,
+        # },
         # rank={
         #     'rrf': {}
         # },
@@ -128,7 +130,7 @@ def extract_filters(query):
 @app.get('/document/<id>')
 def get_document(id):
     document = es.retrieve_document(id)
-    title = document['_source']['name']
+    title = document['_source']['filename']
     paragraphs = document['_source']['content'].split('\n')
     return render_template('document.html', title=title, paragraphs=paragraphs)
 
