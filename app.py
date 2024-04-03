@@ -35,6 +35,7 @@ def handle_search():
                 'multi_match': {
                     'query': parsed_query,
                     'fields': ['filename', 'summary', 'content'],
+                    # can configure search analyzer here, e.g. 'analyzer': 'stop'
                 }
             }
         }
