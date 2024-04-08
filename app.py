@@ -31,13 +31,38 @@ def handle_search():
 
     if parsed_query:
         search_query = {
-            'must': {
-                'multi_match': {
-                    'query': parsed_query,
-                    'fields': ['filename', 'summary', 'content'],
-                    # can configure search analyzer here, e.g. 'analyzer': 'stop'
+            # 'must': {
+            #     'multi_match': {
+            #         'query': parsed_query,
+            #         'fields': ['filename', 'summary', 'content'],
+            #         # can configure search analyzer here, e.g. 'analyzer': 'stop'
+            #     }
+            # }
+            'should': [
+                {
+                    'match': {
+                        'content':{
+                            'query': parsed_query
+                        }
+                    }
+                },
+                {
+                    'match': {
+                        'content':{
+                            'query': parsed_query,
+                            'operator': 'and'
+                        }
+                    }
+                },
+                {
+                    'match_phrase': {
+                        'content':{
+                            'query': parsed_query,
+                            'boost': 2
+                        }
+                    }
                 }
-            }
+            ]
         }
     else:
         search_query = {
@@ -46,56 +71,38 @@ def handle_search():
             }
         }
 
-    results = es.search(
+    results_text_search = es.search(
+        # query={
+        #     'bool': {
+        #         **search_query,
+        #         **filters
+        #     }
+        # },
         query={
             'bool': {
                 **search_query,
-                **filters
             }
         },
-        # knn={
-        #     'field': 'embedding',
-        #     'query_vector': es.get_embedding(parsed_query),
-        #     'k': 50,
-        #     'num_candidates': 50,
-        #     **filters,
-        # },
-        # rank={
-        #     'rrf': {}
-        # },
-        aggs={
-            'category-agg': {
-                'terms': {
-                    'field': 'category.keyword',
-                }
-            },
-            'year-agg': {
-                'date_histogram': {
-                    'field': 'updated_at',
-                    'calendar_interval': 'year',
-                    'format': 'yyyy',
-                },
-            },
-        },
-        size=5,
+        size=10,
         from_=from_
     )
-    aggs = {
-        'Category': {
-            bucket['key']: bucket['doc_count']
-            for bucket in results['aggregations']['category-agg']['buckets']
+
+    results_vector_search = es.search(
+        knn={
+            'field': 'embedding',
+            'query_vector': es.get_embedding(parsed_query),
+            'k': 10,
+            'num_candidates': 10,
+            **filters,
         },
-        'Year': {
-            bucket['key_as_string']: bucket['doc_count']
-            for bucket in results['aggregations']['year-agg']['buckets']
-            if bucket['doc_count'] > 0
-        },
-    }
+    )
 
 
-    return render_template('index.html', results=results['hits']['hits'],
+    return render_template('index.html', 
+                           results_text_search=results_text_search['hits']['hits'],  # text-search
+                           results_vector_search=results_vector_search['hits']['hits'], # vector-search
                            query=query, from_=from_,
-                           total=results['hits']['total']['value'], aggs=aggs)
+                           total=results_text_search['hits']['total']['value']) # total_page
 
 def extract_filters(query):
     filters = []

@@ -6,7 +6,7 @@
           <input type="text" class="form-control" name="query" id="query" placeholder="Enter your search query" value="{{ query }}" autofocus>
       </div>
     </form>
-    {% if results %}
+    {% if results_text_search %}
         <div class="row mb-3">
             <div class="col-2 mt-2">
                 <p><a href="javascript:history.back(1)">← Back</a></p>
@@ -23,46 +23,46 @@
             <div class="col-10">
                 <div class="row mb-3">
                     <div class="col-sm-auto my-auto">
-                        Showing results {{ from_ + 1 }}-{{ from_ + results|length }} out of {{ total }}.
+                        Showing results_text_search {{ from_ + 1 }}-{{ from_ + results_text_search|length }} out of {{ total }}.
                     </div>
                     {% if from_ > 0 %}
                         <div class="col-sm-auto my-auto">
                             <a href="javascript:history.back(1)" class="btn btn-primary">← Previous page</a>
                         </div>
                     {% endif %}
-                    {% if from_ + results|length < total %}
+                    {% if from_ + results_text_search|length < total %}
                         <div class="col-sm-auto my-auto">
                             <form method="POST">
                                 <input type="hidden" name="query" value="{{ query }}">
-                                <input type="hidden" name="from_" value="{{ from_ + results|length }}">
+                                <input type="hidden" name="from_" value="{{ from_ + results_text_search|length }}">
                                 <button type="submit" class="btn btn-primary">Next page →</button>
                             </form>
                         </div>
                     {% endif %}
                     <div class="col"></div>
                 </div>
-                {% for result in results %}
+                {% for result in results_text_search %}
                     <p>
                         <hr>
-                        {{ from_ + loop.index }}. <b><a href="{{ url_for('get_document', id=result._id) }}">{{ result._source.filename }}</a></b>
+                        {{ from_ + loop.index }}. filename: <b><a href="{{ url_for('get_document', id=result._id) }}">{{ result._source.filename }}</a></b>
                         <br>
                         <br>
 
-                        summary: {{ result._source.summary }}
+                        <!-- summary: {{ result._source.summary }}
                         <br>
-                        <br>
+                        <br> -->
 
                         content: {{ result._source.content }}
                         <br>
                         <br>
 
-                        page number: {{ result._source.page_number }}
+                        <!-- page number: {{ result._source.page_number }}
                         <br>                        
-                        <br>
+                        <br> -->
                         
                         <small>
-                            Category: {{ result._source.category }}.
-                            Last updated: {{ result._source.updated_at | default(result._source.created_on) }}.
+                            <!-- Category: {{ result._source.category }}. -->
+                            <!-- Last updated: {{ result._source.updated_at | default(result._source.created_on) }}. -->
                             {% if result._score %}<i>(Score: {{ result._score }})</i>{% endif %}
                         </small>
                     </p>
