@@ -25,19 +25,10 @@ def index():
 def handle_search():
     query = request.form.get('query', '')
     filters, parsed_query = extract_filters(query)
-    print("🐍 File: search-tutorial/app.py | Line: 28 | handle_search ~ parsed_query",parsed_query)
-    print("🐍 File: search-tutorial/app.py | Line: 28 | handle_search ~ filters",filters)
     from_ = request.form.get('from_', type=int, default=0)
 
     if parsed_query:
         search_query = {
-            # 'must': {
-            #     'multi_match': {
-            #         'query': parsed_query,
-            #         'fields': ['filename', 'summary', 'content'],
-            #         # can configure search analyzer here, e.g. 'analyzer': 'stop'
-            #     }
-            # }
             'should': [
                 {
                     'match': {
@@ -72,12 +63,6 @@ def handle_search():
         }
 
     results_text_search = es.search(
-        # query={
-        #     'bool': {
-        #         **search_query,
-        #         **filters
-        #     }
-        # },
         query={
             'bool': {
                 **search_query,
@@ -96,7 +81,6 @@ def handle_search():
             **filters,
         },
     )
-
 
     return render_template('index.html', 
                            results_text_search=results_text_search['hits']['hits'],  # text-search
