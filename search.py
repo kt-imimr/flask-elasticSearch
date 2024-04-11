@@ -6,15 +6,26 @@ import time
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 
-load_dotenv()
+load_dotenv("./env-local")
 
 from sentence_transformers import SentenceTransformer
 
+SUPER_USER=os.getenv('SUPER_USER')
+ELASTIC_PASSWORD = os.getenv('ELASTIC_PASSWORD')
+CA_CERT_SHA256_FINGERPRINT=os.getenv('CA_CERT_SHA256_FINGERPRINT')
+ES_HOME=os.getenv('ES_HOME')
 
 
 class Search:
     def __init__(self):
-        self.es = Elasticsearch('http://localhost:9200') # it export es when the class is called, because the constructor initiates the class
+        # self.es = Elasticsearch([f'https://localhost:9200'],
+        #            basic_auth=(SUPER_USER, ELASTIC_PASSWORD),
+        #     ca_certs=f"{ES_HOME}/config/certs/http_ca.crt",
+        # )
+        self.es = Elasticsearch(
+            'http://localhost:9200',
+        )
+
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         
         client_info = self.es.info()
