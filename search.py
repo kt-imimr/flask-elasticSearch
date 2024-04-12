@@ -6,7 +6,7 @@ import time
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 
-load_dotenv("./env-local")
+load_dotenv("./.env.local")
 
 from sentence_transformers import SentenceTransformer
 
@@ -16,15 +16,16 @@ CA_CERT_SHA256_FINGERPRINT=os.getenv('CA_CERT_SHA256_FINGERPRINT')
 ES_HOME=os.getenv('ES_HOME')
 
 
+
 class Search:
     def __init__(self):
-        # self.es = Elasticsearch([f'https://localhost:9200'],
-        #            basic_auth=(SUPER_USER, ELASTIC_PASSWORD),
-        #     ca_certs=f"{ES_HOME}/config/certs/http_ca.crt",
-        # )
-        self.es = Elasticsearch(
-            'http://localhost:9200',
+        self.es = Elasticsearch([f'https://localhost:9200'],
+                   basic_auth=(SUPER_USER, ELASTIC_PASSWORD),
+            ca_certs=f"{ES_HOME}/config/certs/http_ca.crt",
         )
+        # self.es = Elasticsearch(
+        #     'http://localhost:9200',
+        # )
 
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         
@@ -33,10 +34,10 @@ class Search:
         pprint(client_info.body)
 
     def search(self, **query_args):
-        return self.es.search(index='demo_index', **query_args)
+        return self.es.search(index='_all', **query_args)
     
     def retrieve_document(self, id):
-        return self.es.get(index='demo_index', id=id)
+        return self.es.get(index='_all', id=id)
     
     def create_index(self):
         self.es.indices.delete(index='my_documents', ignore_unavailable=True)

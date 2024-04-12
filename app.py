@@ -8,6 +8,7 @@ import datetime
 
 # api routes
 from routes.upload import upload_bp
+from service.lang_detector import detect_lang
 
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
@@ -24,6 +25,9 @@ def index():
 @app.post('/')
 def handle_search():
     query = request.form.get('query', '')
+    lang = detect_lang(query)
+    print("🐍 File: search-tutorial/app.py | Line: 29 | handle_search ~ lang",lang)
+
     filters, parsed_query = extract_filters(query)
     from_ = request.form.get('from_', type=int, default=0)
 
