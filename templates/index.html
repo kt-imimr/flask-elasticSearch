@@ -2,7 +2,7 @@
 
 {% block content %}
     <form method="POST" action="{{ url_for('handle_search') }}">
-      <div class="mb-3">
+      <div class="mt-3 mb-3">
           <input type="text" class="form-control" name="query" id="query" placeholder="Enter your search query" value="{{ query }}" autofocus>
       </div>
     </form>
