@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, jsonify
 from search import Search
 
 
-import datetime
 
 
 # api routes
@@ -36,24 +35,27 @@ def handle_search():
             'should': [
                 {
                     'match': {
-                        'content':{
-                            'query': parsed_query
+                        'transformed_content':{
+                            'query': parsed_query,
+                            'analyzer': "smartcn_with_stop" # using different analyzer at the search api for the respective content results in different scoring result. 
                         }
                     }
                 },
                 {
                     'match': {
-                        'content':{
+                        'transformed_content':{
                             'query': parsed_query,
-                            'operator': 'and'
+                            'operator': 'and',
+                            'analyzer': "my_analyzer"
                         }
                     }
                 },
                 {
                     'match_phrase': {
-                        'content':{
+                        'transformed_content':{
                             'query': parsed_query,
-                            'boost': 2
+                            'boost': 2,
+                            'analyzer': "smartcn_with_stop"
                         }
                     }
                 }
@@ -76,19 +78,19 @@ def handle_search():
         from_=from_
     )
 
-    results_vector_search = es.search(
-        knn={
-            'field': 'embedding',
-            'query_vector': es.get_embedding(parsed_query),
-            'k': 10,
-            'num_candidates': 10,
-            **filters,
-        },
-    )
+    # results_vector_search = es.search(
+    #     knn={
+    #         'field': 'embedding',
+    #         'query_vector': es.get_embedding(parsed_query),
+    #         'k': 10,
+    #         'num_candidates': 10,
+    #         **filters,
+    #     },
+    # )
 
     return render_template('index.html', 
                            results_text_search=results_text_search['hits']['hits'],  # text-search
-                           results_vector_search=results_vector_search['hits']['hits'], # vector-search
+                        #    results_vector_search=results_vector_search['hits']['hits'], # vector-search
                            query=query, from_=from_,
                            total=results_text_search['hits']['total']['value']) # total_page
 

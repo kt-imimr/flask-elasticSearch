@@ -95,8 +95,6 @@ def upload_file():
 
         # 4nd es index
 
-
-
         return jsonify({"response": "File uploaded successfully and extracting info and analyzing it."})
     else:
         return jsonify({"error": "Invalid file type"})
