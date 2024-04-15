@@ -92,11 +92,19 @@ def handle_search():
     #     },
     # )
 
-    return render_template('index.html', 
-                           results_text_search=results_text_search['hits']['hits'],  # text-search
-                        #    results_vector_search=results_vector_search['hits']['hits'], # vector-search
-                           query=query, from_=from_,
-                           total=results_text_search['hits']['total']['value']) # total_page
+    # return render_template('index.html', 
+    #                        results_text_search=results_text_search['hits']['hits'],  # text-search
+    #                     #    results_vector_search=results_vector_search['hits']['hits'], # vector-search
+    #                        query=query, from_=from_,
+    #                        total=results_text_search['hits']['total']['value']) # total_page
+
+    # for react,
+    return {
+        'results_text_search': results_text_search['hits']['hits'],
+        'query': query,
+        'from_': from_,
+        'total': results_text_search['hits']['total']['value']
+    }
 
 def extract_filters(query):
     filters = []
