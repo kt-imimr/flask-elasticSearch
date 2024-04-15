@@ -2,6 +2,7 @@ import re
 from flask import Flask, render_template, request, jsonify
 from search import Search
 
+from flask_cors import CORS
 
 
 
@@ -11,6 +12,8 @@ from service.lang_detector import detect_lang
 
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
+CORS(app)
+
 
 
 
@@ -23,7 +26,8 @@ def index():
 
 @app.post('/')
 def handle_search():
-    query = request.form.get('query', '')
+    query = request.get_json().get('query')
+    print("🐍 File: search-tutorial/app.py | Line: 27 | handle_search ~ query",query)
     lang = detect_lang(query)
     print("🐍 File: search-tutorial/app.py | Line: 29 | handle_search ~ lang",lang)
 
@@ -132,7 +136,15 @@ def get_document(id):
     paragraphs = document['_source']['content'].split('\n')
     return render_template('document.html', title=title, paragraphs=paragraphs)
 
+@app.post("/crawl")
+def handle_web_crawling():
+    domain = request.form.get("domain")
+    subpath = request.form.get("subpath")
+    if 'https://' not in domain or 'http://' not in domain:
+        domain = f"https://{domain}"
+    return render_template('crawl.html', domain=domain, subpath=subpath)
 
+# ===== API ends here =======================================================================================
 
 @app.cli.command()
 def reindex():
