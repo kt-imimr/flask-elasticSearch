@@ -12,7 +12,7 @@ from service.lang_detector import detect_lang
 
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
-CORS(app)
+CORS(app, resource={r"/*": { 'origins': "*"}})
 
 
 
@@ -92,19 +92,15 @@ def handle_search():
     #     },
     # )
 
-    # return render_template('index.html', 
-    #                        results_text_search=results_text_search['hits']['hits'],  # text-search
-    #                     #    results_vector_search=results_vector_search['hits']['hits'], # vector-search
-    #                        query=query, from_=from_,
-    #                        total=results_text_search['hits']['total']['value']) # total_page
-
     # for react,
-    return {
+    data = {
         'results_text_search': results_text_search['hits']['hits'],
         'query': query,
         'from_': from_,
         'total': results_text_search['hits']['total']['value']
     }
+    return jsonify(data), 200
+    
 
 def extract_filters(query):
     filters = []
@@ -142,7 +138,13 @@ def get_document(id):
     document = es.retrieve_document(id)
     title = document['_source']['filename']
     paragraphs = document['_source']['content'].split('\n')
-    return render_template('document.html', title=title, paragraphs=paragraphs)
+
+    data = {
+        title,
+        paragraphs
+    }
+
+    return jsonify(data), 200
 
 @app.post("/crawl")
 def handle_web_crawling():
@@ -150,7 +152,12 @@ def handle_web_crawling():
     subpath = request.form.get("subpath")
     if 'https://' not in domain or 'http://' not in domain:
         domain = f"https://{domain}"
-    return render_template('crawl.html', domain=domain, subpath=subpath)
+
+    data = {
+        domain,
+        subpath
+    }
+    return data, 200
 
 # ===== API ends here =======================================================================================
 
