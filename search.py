@@ -37,7 +37,13 @@ class Search:
         return self.es.search(index='_all', **query_args)
     
     def retrieve_document(self, id):
-        return self.es.get(index='_all', id=id)
+        print("🐍 File: search-tutorial/search.py | Line: 40 | search ~ id",id)
+        try: 
+            result = self.es.get(index='demo_index', id=id)
+        except:
+            print("Doc Not Found in demo_index \n Trying upload_index")
+            result = self.es.get(index='upload_index', id=id)
+        return result
     
     def create_index(self):
         self.es.indices.delete(index='my_documents', ignore_unavailable=True)

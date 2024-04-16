@@ -12,7 +12,7 @@ from service.lang_detector import detect_lang
 
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
-CORS(app, resource={r"/*": { 'origins': "*"}})
+CORS(app, resource={r"/api/*": { 'origins': "*"}})
 
 
 
@@ -24,9 +24,10 @@ es = Search()
 def index():
     return render_template('index.html')
 
-@app.post('/')
+@app.route('/', methods=['POST'])
 def handle_search():
     query = request.get_json().get('query')
+    # query = request.form.get('query')
     print("🐍 File: search-tutorial/app.py | Line: 27 | handle_search ~ query",query)
     lang = detect_lang(query)
     print("🐍 File: search-tutorial/app.py | Line: 29 | handle_search ~ lang",lang)
@@ -92,6 +93,8 @@ def handle_search():
     #     },
     # )
 
+    # return render_template('index.html', results_text_search=results_text_search['hits']['hits'], query=query, from_=from_, total=results_text_search['hits']['total']['value'])
+    
     # for react,
     data = {
         'results_text_search': results_text_search['hits']['hits'],
@@ -100,7 +103,6 @@ def handle_search():
         'total': results_text_search['hits']['total']['value']
     }
     return jsonify(data), 200
-    
 
 def extract_filters(query):
     filters = []
@@ -133,16 +135,19 @@ def extract_filters(query):
     return {'filter': filters}, query
 
 
-@app.get('/document/<id>')
+@app.route('/document/<id>', methods=['GET', 'OPTIONS'])
 def get_document(id):
+    print("🐍 File: search-tutorial/app.py | Line: 138 | undefined ~ id",id)
     document = es.retrieve_document(id)
     title = document['_source']['filename']
     paragraphs = document['_source']['content'].split('\n')
 
     data = {
-        title,
-        paragraphs
+        "title": title,
+        "paragraphs": paragraphs
     }
+    
+    # return render_template('document.html', title=title, data=data)
 
     return jsonify(data), 200
 
