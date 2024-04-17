@@ -45,6 +45,8 @@ class Search:
             result = self.es.get(index='upload_index', id=id)
         return result
     
+
+    # ============================================= indexing =============================================
     def create_index(self):
         self.es.indices.delete(index='my_documents', ignore_unavailable=True)
 

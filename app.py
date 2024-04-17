@@ -12,7 +12,7 @@ from service.lang_detector import detect_lang
 
 app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
-CORS(app, resource={r"/api/*": { 'origins': "*"}})
+CORS(app, resource={r"/*": { 'origins': "*"}})
 
 
 
@@ -33,7 +33,8 @@ def handle_search():
     print("🐍 File: search-tutorial/app.py | Line: 29 | handle_search ~ lang",lang)
 
     filters, parsed_query = extract_filters(query)
-    from_ = request.form.get('from_', type=int, default=0)
+    # from_ = request.form.get('from_', type=int, default=0)
+    from_ = request.get_json().get('from_', 0)
 
     if parsed_query:
         search_query = {
@@ -72,6 +73,7 @@ def handle_search():
                 'match_all': {}
             }
         }
+
 
     results_text_search = es.search(
         query={
