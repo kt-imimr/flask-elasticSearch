@@ -37,7 +37,6 @@ class Search:
         return self.es.search(index='_all', **query_args)
     
     def retrieve_document(self, id):
-        print("🐍 File: search-tutorial/search.py | Line: 40 | search ~ id",id)
         try: 
             result = self.es.get(index='demo_index', id=id)
         except:

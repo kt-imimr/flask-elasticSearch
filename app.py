@@ -27,13 +27,7 @@ def index():
 @app.route('/', methods=['POST'])
 def handle_search():
     query = request.get_json().get('query')
-    # query = request.form.get('query')
-    print("🐍 File: search-tutorial/app.py | Line: 27 | handle_search ~ query",query)
-    lang = detect_lang(query)
-    print("🐍 File: search-tutorial/app.py | Line: 29 | handle_search ~ lang",lang)
-
     filters, parsed_query = extract_filters(query)
-    # from_ = request.form.get('from_', type=int, default=0)
     from_ = request.get_json().get('from_', 0)
 
     if parsed_query:
@@ -87,7 +81,7 @@ def handle_search():
 
     # results_vector_search = es.search(
     #     knn={
-    #         'field': 'embedding',
+    #         'field': 'transformed_content',
     #         'query_vector': es.get_embedding(parsed_query),
     #         'k': 10,
     #         'num_candidates': 10,
@@ -100,6 +94,7 @@ def handle_search():
     # for react,
     data = {
         'results_text_search': results_text_search['hits']['hits'],
+        # 'results_vector_search': results_vector_search['hits']['hits'],
         'query': query,
         'from_': from_,
         'total': results_text_search['hits']['total']['value']
