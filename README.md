@@ -1,6 +1,13 @@
-# Elasticsearch Search Tutorial
+# This directory contains a starter Flask project used in the Search tutorial.
 
-This directory contains a starter Flask project used in the Search tutorial.
+note:
+package version list:
+elastic-transport==8.12.0
+elasticsearch==8.12.0
+
+but the elasticsearch version is 8.12.1
+plugin smartcn in elasticsearch is compatible
+plugin tsconvert v8.12.1 is compatible (in fact this plugin has to be compatible with es v8.12.1 in order to work and be installed)
 
 # How to affect scoring system
 

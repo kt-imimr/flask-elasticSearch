@@ -79,22 +79,19 @@ def handle_search():
         from_=from_
     )
 
-    # results_vector_search = es.search(
-    #     knn={
-    #         'field': 'transformed_content',
-    #         'query_vector': es.get_embedding(parsed_query),
-    #         'k': 10,
-    #         'num_candidates': 10,
-    #         **filters,
-    #     },
-    # )
+    results_vector_search = es.search(
+        knn={
+            'field': 'embedding',
+            'query_vector': es.get_embedding(parsed_query),
+            'k': 10,
+            'num_candidates': 10,
+            **filters,
+        },
+    )
 
-    # return render_template('index.html', results_text_search=results_text_search['hits']['hits'], query=query, from_=from_, total=results_text_search['hits']['total']['value'])
-    
-    # for react,
     data = {
         'results_text_search': results_text_search['hits']['hits'],
-        # 'results_vector_search': results_vector_search['hits']['hits'],
+        'results_vector_search': results_vector_search['hits']['hits'],
         'query': query,
         'from_': from_,
         'total': results_text_search['hits']['total']['value']
@@ -134,7 +131,6 @@ def extract_filters(query):
 
 @app.route('/document/<id>', methods=['GET', 'OPTIONS'])
 def get_document(id):
-    print("🐍 File: search-tutorial/app.py | Line: 138 | undefined ~ id",id)
     document = es.retrieve_document(id)
     title = document['_source']['filename']
     paragraphs = document['_source']['content'].split('\n')
@@ -144,8 +140,6 @@ def get_document(id):
         "paragraphs": paragraphs
     }
     
-    # return render_template('document.html', title=title, data=data)
-
     return jsonify(data), 200
 
 @app.post("/crawl")

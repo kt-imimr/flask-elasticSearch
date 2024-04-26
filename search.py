@@ -11,10 +11,8 @@ load_dotenv("./.env.local")
 from sentence_transformers import SentenceTransformer
 
 SUPER_USER=os.getenv('SUPER_USER')
-ELASTIC_PASSWORD = os.getenv('ELASTIC_PASSWORD')
-CA_CERT_SHA256_FINGERPRINT=os.getenv('CA_CERT_SHA256_FINGERPRINT')
-ES_HOME=os.getenv('ES_HOME')
-
+ELASTIC_PASSWORD = os.getenv('ELASTIC_PASSWORD8_12_1')
+ES_HOME=os.getenv('ES_HOME8_12_1')
 
 
 class Search:
