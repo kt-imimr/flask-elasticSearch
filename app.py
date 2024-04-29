@@ -1,3 +1,4 @@
+import json
 import re
 from flask import Flask, render_template, request, jsonify
 from search import Search
@@ -35,40 +36,34 @@ def handle_search():
 
     if parsed_query:
         search_query = {
-            # 'should': [
-            #     {
-            #         'match': {
-            #             'transformed_content':{
-            #                 'query': parsed_query,
-            #                 'analyzer': "smartcn_with_stop" # using different analyzer at the search api for the respective content results in different scoring result. 
-            #             }
-            #         }
-            #     },
-            #     {
-            #         'match': {
-            #             'transformed_content':{
-            #                 'query': parsed_query,
-            #                 'operator': 'and',
-            #                 'analyzer': "my_analyzer"
-            #             }
-            #         }
-            #     },
-            #     {
-            #         'match_phrase': {
-            #             'transformed_content':{
-            #                 'query': parsed_query,
-            #                 'boost': 2,
-            #                 'analyzer': "smartcn_with_stop"
-            #             }
-            #         }
-            #     }
-            # ]
-            'must': {
-                'multi_match': {
-                    'query': parsed_query,
-                    'fields': ['filename','transformed_content'],
+            'should': [
+                {
+                    'match': {
+                        'transformed_content':{
+                            'query': parsed_query,
+                            'analyzer': "smartcn_with_stop" # using different analyzer at the search api for the respective content results in different scoring result. 
+                        }
+                    }
+                },
+                {
+                    'match': {
+                        'transformed_content':{
+                            'query': parsed_query,
+                            'operator': 'and',
+                            'analyzer': "my_analyzer"
+                        }
+                    }
+                },
+                {
+                    'match_phrase': {
+                        'transformed_content':{
+                            'query': parsed_query,
+                            'boost': 2,
+                            'analyzer': "smartcn_with_stop"
+                        }
+                    }
                 }
-            }
+            ]
         }
     else:
         search_query = {
@@ -106,12 +101,12 @@ def handle_search():
         },
     )
 
-    # aggs = {
-    #     'Filename': {
-    #         bucket['key']: bucket['doc_count']
-    #         for bucket in results_vector_search['aggregations']['filename-agg']['buckets']
-    #     },
-    # }
+    aggs = {
+        'Filename': {
+            bucket['key']: bucket['doc_count']
+            for bucket in results_text_search['aggregations']['filename-agg']['buckets']
+        },
+    }
 
     data = {
         'results_text_search': results_text_search['hits']['hits'],
@@ -119,7 +114,7 @@ def handle_search():
         'query': query,
         'from_': from_,
         'total': results_text_search['hits']['total']['value'],
-        # 'aggs': aggs
+        'aggs': aggs
     }
     return jsonify(data), 200
 
@@ -133,33 +128,6 @@ def extract_filters(query):
             'term': {
                 'filename.keyword': {
                     'value': m.group(1)
-                }
-            },
-        })
-        print("🐍 File: search-tutorial/app.py | Line: 138 | extract_filters ~ filters",filters)
-        query = re.sub(filter_regex, '', query).strip()
-        print("🐍 File: search-tutorial/app.py | Line: 139 | extract_filters ~ query",query)
-
-    filter_regex = r'category:([^\s]+)\s*'
-    m = re.search(filter_regex, query)
-    if m:
-        filters.append({
-            'term': {
-                'category.keyword': {
-                    'value': m.group(1)
-                }
-            },
-        })
-        query = re.sub(filter_regex, '', query).strip()
-
-    filter_regex = r'year:([^\s]+)\s*'
-    m = re.search(filter_regex, query)
-    if m:
-        filters.append({
-            'range': {
-                'updated_at': {
-                    'gte': f'{m.group(1)}||/y',
-                    'lte': f'{m.group(1)}||/y',
                 }
             },
         })
