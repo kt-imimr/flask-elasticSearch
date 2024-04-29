@@ -27,39 +27,48 @@ def index():
 @app.route('/', methods=['POST'])
 def handle_search():
     query = request.get_json().get('query')
+    print("🐍 File: search-tutorial/app.py | Line: 30 | handle_search ~ query",query)
     filters, parsed_query = extract_filters(query)
+    print("🐍 File: search-tutorial/app.py | Line: 32 | handle_search ~ filters",filters)
+    print("🐍 File: search-tutorial/app.py | Line: 32 | handle_search ~ parsed_query",parsed_query)
     from_ = request.get_json().get('from_', 0)
 
     if parsed_query:
         search_query = {
-            'should': [
-                {
-                    'match': {
-                        'transformed_content':{
-                            'query': parsed_query,
-                            'analyzer': "smartcn_with_stop" # using different analyzer at the search api for the respective content results in different scoring result. 
-                        }
-                    }
-                },
-                {
-                    'match': {
-                        'transformed_content':{
-                            'query': parsed_query,
-                            'operator': 'and',
-                            'analyzer': "my_analyzer"
-                        }
-                    }
-                },
-                {
-                    'match_phrase': {
-                        'transformed_content':{
-                            'query': parsed_query,
-                            'boost': 2,
-                            'analyzer': "smartcn_with_stop"
-                        }
-                    }
+            # 'should': [
+            #     {
+            #         'match': {
+            #             'transformed_content':{
+            #                 'query': parsed_query,
+            #                 'analyzer': "smartcn_with_stop" # using different analyzer at the search api for the respective content results in different scoring result. 
+            #             }
+            #         }
+            #     },
+            #     {
+            #         'match': {
+            #             'transformed_content':{
+            #                 'query': parsed_query,
+            #                 'operator': 'and',
+            #                 'analyzer': "my_analyzer"
+            #             }
+            #         }
+            #     },
+            #     {
+            #         'match_phrase': {
+            #             'transformed_content':{
+            #                 'query': parsed_query,
+            #                 'boost': 2,
+            #                 'analyzer': "smartcn_with_stop"
+            #             }
+            #         }
+            #     }
+            # ]
+            'must': {
+                'multi_match': {
+                    'query': parsed_query,
+                    'fields': ['filename','transformed_content'],
                 }
-            ]
+            }
         }
     else:
         search_query = {
@@ -73,6 +82,14 @@ def handle_search():
         query={
             'bool': {
                 **search_query,
+                **filters
+            }
+        },
+        aggs={
+            'filename-agg':{
+                'terms': {
+                    'field': 'filename.keyword',
+                }
             }
         },
         size=10,
@@ -89,17 +106,39 @@ def handle_search():
         },
     )
 
+    # aggs = {
+    #     'Filename': {
+    #         bucket['key']: bucket['doc_count']
+    #         for bucket in results_vector_search['aggregations']['filename-agg']['buckets']
+    #     },
+    # }
+
     data = {
         'results_text_search': results_text_search['hits']['hits'],
         'results_vector_search': results_vector_search['hits']['hits'],
         'query': query,
         'from_': from_,
-        'total': results_text_search['hits']['total']['value']
+        'total': results_text_search['hits']['total']['value'],
+        # 'aggs': aggs
     }
     return jsonify(data), 200
 
 def extract_filters(query):
     filters = []
+
+    filter_regex = r'filename:([^\s]+)\s*'
+    m=re.search(filter_regex, query)
+    if m:
+        filters.append({
+            'term': {
+                'filename.keyword': {
+                    'value': m.group(1)
+                }
+            },
+        })
+        print("🐍 File: search-tutorial/app.py | Line: 138 | extract_filters ~ filters",filters)
+        query = re.sub(filter_regex, '', query).strip()
+        print("🐍 File: search-tutorial/app.py | Line: 139 | extract_filters ~ query",query)
 
     filter_regex = r'category:([^\s]+)\s*'
     m = re.search(filter_regex, query)
