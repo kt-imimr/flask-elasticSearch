@@ -85,6 +85,11 @@ def handle_search():
                 'terms': {
                     'field': 'filename.keyword',
                 }
+            },
+            'tag-agg':{
+                'terms': {
+                    'field': 'tag.keyword',
+                }
             }
         },
         size=10,
@@ -106,6 +111,10 @@ def handle_search():
             bucket['key']: bucket['doc_count']
             for bucket in results_text_search['aggregations']['filename-agg']['buckets']
         },
+        'Tag':{
+            bucket['key']: bucket['doc_count']
+            for bucket in results_text_search['aggregations']['tag-agg']['buckets']
+        }
     }
 
     data = {
@@ -121,6 +130,18 @@ def handle_search():
 def extract_filters(query):
     filters = []
 
+    filter_regex = r'filename:([^\s]+)\s*'
+    m=re.search(filter_regex, query)
+    if m:
+        filters.append({
+            'term': {
+                'filename.keyword': {
+                    'value': m.group(1)
+                }
+            },
+        })
+        query = re.sub(filter_regex, '', query).strip()
+    
     filter_regex = r'filename:([^\s]+)\s*'
     m=re.search(filter_regex, query)
     if m:
