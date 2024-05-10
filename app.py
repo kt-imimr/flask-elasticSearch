@@ -84,7 +84,7 @@ def handle_search():
             'filename-agg':{
                 'terms': {
                     'field': 'filename.keyword',
-                    'size': 2000
+                    'size': 100000
                 }
             },
             'tag-agg':{

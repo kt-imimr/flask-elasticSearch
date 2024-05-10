@@ -32,13 +32,13 @@ class Search:
         pprint(client_info.body)
 
     def search(self, **query_args):
-        return self.es.search(index='emsd_index', **query_args)
+        return self.es.search(index='emsd_index2', **query_args)
     
     def retrieve_document(self, id):
         try: 
-            result = self.es.get(index='emsd_index', id=id)
+            result = self.es.get(index='emsd_index2', id=id)
         except:
-            print("Doc Not Found in emsd_index \n Trying upload_index")
+            print("Doc Not Found in emsd_index2 \n Trying upload_index")
             result = self.es.get(index='upload_index', id=id)
         return result
     
