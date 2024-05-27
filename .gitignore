@@ -1,6 +1,7 @@
 .flaskenv
 __pycache__
 .venv
+venv
 uploads/pdf/*
 uploads/jpg/*
 uploads/png/*
