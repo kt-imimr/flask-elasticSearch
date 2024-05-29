@@ -15,9 +15,6 @@ app = Flask(__name__)
 app.register_blueprint(upload_bp, url_prefix='/api')
 CORS(app, resource={r"/*": { 'origins': "*"}})
 
-
-
-
 es = Search()
 
 
@@ -28,10 +25,7 @@ def index():
 @app.route('/', methods=['POST'])
 def handle_search():
     query = request.get_json().get('query')
-    print("🐍 File: search-tutorial/app.py | Line: 30 | handle_search ~ query",query)
     filters, parsed_query = extract_filters(query)
-    print("🐍 File: search-tutorial/app.py | Line: 32 | handle_search ~ filters",filters)
-    print("🐍 File: search-tutorial/app.py | Line: 32 | handle_search ~ parsed_query",parsed_query)
     from_ = request.get_json().get('from_', 0)
 
     if parsed_query:

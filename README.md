@@ -19,3 +19,11 @@ plugin tsconvert v8.12.1 is compatible (in fact this plugin has to be compatible
 if you want to prioritize synonym list, you will be disappointed. The elastic search engine won't allow you to put synonym_graph filter during the index time.
 
 and it makes sense, if user input query is in the synonym list and the synonym_graph filter is used immediately before the tokenizer is put into use, then the tokenizer becomes useless. We should see if the tokenizer helps then lookup the synonym list.
+
+# API
+
+1. upload api: I am stilling wondering if I should use the same software or just replicate it in this repo.
+   if I replicate it in here, then whatever has been changed in there, must be changed manually here.
+
+this is annoying, but If I use the same software, then it will be easier to maintain and hard to maintain at the same time because it will get bigger.
+Bigger means more complexity.

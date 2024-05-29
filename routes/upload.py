@@ -12,47 +12,43 @@ check_file_type = Check_file_type()
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = './uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
 upload_bp = Blueprint('upload', __name__)
 
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'doc'}
 
 # upload route
-def allowed_file(filename):
-    print("🐍 File: search-tutorial/app.py | Line: 95 | allowed_file ~ filename.rsplit('.', 1)[[1]].lower()",filename.rsplit('.', 1)[1])
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(file_stream):
+    is_pdf = b'PDF' in file_stream
+    return is_pdf
 
 @upload_bp.route('/upload', methods=['POST'])
 def upload_file():
     print("🐍 File: routes/upload.py | Line: 30 | upload_file ~ request.files",request.files)
     if 'file' not in request.files:
-        return jsonify({"error": "No file"})
+        return jsonify({"error": "No file"}), 400
     file = request.files['file']
     print(f"🐍 file content_length: {file.content_length}\n, content_type: {file.content_type}\n, filename: {file.filename}\n, headers: {file.headers}\n, mimetype: {file.mimetype}\n, mimetype_params: {file.mimetype_params}\n, name: {file.name}\n, save: {file.save}\n, stream: {file.stream}" )
     print(f"🐍 file.stream: ", dir(file.stream))
-    print(f"🐍 file.stream: ", type(file.stream.readlines()))
-    head_bytes = file.stream.readlines()[1]
-    is_pdf = 'PDF' in head_bytes
+    print(f"🐍 file: ", dir(file))
+
+    file_stream = file.stream.read()
+    
     
     if file.filename == '':
-        return jsonify({"error": "No selected file"})
-    if file and allowed_file(file.filename):
+        return jsonify({"error": "No selected file"}), 400
+    if file and allowed_file(file_stream):
         filename = secure_filename(file.filename)
 
-        # 1st determine whether its file extension
+        # get the extension, pdf in this case
         fileExt = filename.rsplit('.', 1)[1].lower()
-        print("🐍 File: search-tutorial/app.py | Line: 109 | upload_file ~ fileExt",fileExt)
+        relative_file_path = os.path.join(f"./uploads/{fileExt}/", filename)
+        file.stream.seek(0) # reset the pointer to 0
+        file.save(relative_file_path) # save it
 
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'] + f"/{fileExt}/", filename)
-        print("🐍 File: search-tutorial/app.py | Line: 163 | upload_file ~ file_path",file_path)
-        file.save(file_path)
-        # is_pdf = check_file_type.is_pdf(file_path)
+        
 
         
 
 
-        return jsonify({"response": "File uploaded successfully and extracted info and indexed into elasticsearch."})
+        return jsonify({"response": "File uploaded successfully and extracted info and indexed into elasticsearch."}), 200
     else:
-        return jsonify({"error": "Invalid file type"})
+        return jsonify({"error": "Invalid file type"}), 400
